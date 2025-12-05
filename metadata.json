@@ -1,0 +1,7 @@
+{
+  "name": "Ride Share Lite",
+  "description": "A smart carpooling platform for commuters to find optimized shared rides based on route overlap and time windows.",
+  "requestFramePermissions": [
+    "geolocation"
+  ]
+}
