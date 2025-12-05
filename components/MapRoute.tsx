@@ -5,6 +5,7 @@ interface MapRouteProps {
   matchScore?: number;
   fromCoords?: [number, number];
   toCoords?: [number, number];
+  driverCoords?: [number, number];
 }
 
 declare global {
@@ -13,10 +14,11 @@ declare global {
   }
 }
 
-export const MapRoute: React.FC<MapRouteProps> = ({ active, matchScore, fromCoords, toCoords }) => {
+export const MapRoute: React.FC<MapRouteProps> = ({ active, matchScore, fromCoords, toCoords, driverCoords }) => {
   const mapContainerRef = useRef<HTMLDivElement>(null);
   const mapInstanceRef = useRef<any>(null);
   const layerGroupRef = useRef<any>(null);
+  const driverMarkerRef = useRef<any>(null);
 
   // Initialize Map
   useEffect(() => {
@@ -69,6 +71,9 @@ export const MapRoute: React.FC<MapRouteProps> = ({ active, matchScore, fromCoor
   useEffect(() => {
     if (!mapInstanceRef.current || !layerGroupRef.current || !window.L) return;
 
+    // Clear static layers but keep driver marker distinct if needed, 
+    // actually simpler to clear all and redraw for this demo unless perf issues arise.
+    // For smoothness, we handle driverMarker separately in the next effect.
     layerGroupRef.current.clearLayers();
 
     if (active && fromCoords && toCoords) {
@@ -106,8 +111,13 @@ export const MapRoute: React.FC<MapRouteProps> = ({ active, matchScore, fromCoor
         lineJoin: 'round'
       }).addTo(layerGroupRef.current);
 
-      // Fit bounds
-      mapInstanceRef.current.fitBounds(polyline.getBounds(), { 
+      // Fit bounds logic: include driver if present
+      const bounds = polyline.getBounds();
+      if (driverCoords) {
+        bounds.extend(driverCoords);
+      }
+
+      mapInstanceRef.current.fitBounds(bounds, { 
         padding: [50, 50],
         maxZoom: 13,
         animate: true,
@@ -128,6 +138,33 @@ export const MapRoute: React.FC<MapRouteProps> = ({ active, matchScore, fromCoor
       }
     }
   }, [active, fromCoords, toCoords, matchScore]);
+
+  // Handle Driver Live Location separately for smooth animation
+  useEffect(() => {
+    if (!mapInstanceRef.current || !window.L) return;
+    const L = window.L;
+
+    if (driverCoords) {
+      const carIcon = L.divIcon({
+        className: 'bg-transparent',
+        html: `<div class="relative w-8 h-8 flex items-center justify-center bg-white rounded-full shadow-md border-2 border-blue-600 text-xl transform -translate-x-1/2 -translate-y-1/2 transition-all duration-300">🚗</div>`,
+        iconSize: [32, 32],
+        iconAnchor: [16, 16]
+      });
+
+      if (!driverMarkerRef.current) {
+        driverMarkerRef.current = L.marker(driverCoords, { icon: carIcon, zIndexOffset: 1000 }).addTo(mapInstanceRef.current);
+      } else {
+        driverMarkerRef.current.setLatLng(driverCoords);
+        driverMarkerRef.current.setIcon(carIcon);
+      }
+    } else {
+      if (driverMarkerRef.current) {
+        driverMarkerRef.current.remove();
+        driverMarkerRef.current = null;
+      }
+    }
+  }, [driverCoords]);
 
   return (
     <div className="relative w-full h-48 bg-slate-100 dark:bg-slate-800 rounded-xl overflow-hidden shadow-inner border border-slate-200 dark:border-slate-700 z-0">

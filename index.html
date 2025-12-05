@@ -2,10 +2,23 @@
 <html lang="en">
   <head>
     <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=0" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover" />
     <title>Ride Share Lite</title>
     <meta name="description" content="Connect with daily commuters on your route." />
     
+    <!-- PWA Settings for Native App Feel -->
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)">
+    <meta name="theme-color" content="#020617" media="(prefers-color-scheme: dark)">
+    <meta name="mobile-web-app-capable" content="yes">
+    
+    <!-- App Icon -->
+    <link rel="apple-touch-icon" href="https://cdn-icons-png.flaticon.com/512/3063/3063823.png">
+    
+    <!-- Embedded Manifest for PWA Installation -->
+    <link rel="manifest" href="data:application/json;base64,eyJuYW1lIjoiUmlkZSBTaGFyZSBMaXRlIiwic2hvcnRfbmFtZSI6IlJpZGUgU2hhcmUiLCJzdGFydF91cmwiOiIvIiwiZGlzcGxheSI6InN0YW5kYWxvbmUiLCJiYWNrZ3JvdW5kX2NvbG9yIjoiI2ZmZmZmZiIsInRoZW1lX2NvbG9yIjoiIzE2YTM0YSIsImljb25zIjpbeyJzcmMiOiJodHRwczovL2Nkbi1pY29ucy1wbmcuZmxhdGljb24uY29tLzUxMi8zMDYzLzMwNjM4MjMucG5nIiwic2l6ZXMiOiI1MTJ4NTEyIiwidHlwZSI6ImltYWdlL3BuZyJ9XX0=" />
+
     <!-- Leaflet CSS -->
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="" />
     
@@ -36,6 +49,7 @@
         -webkit-font-smoothing: antialiased;
         -moz-osx-font-smoothing: grayscale;
         background-color: #f3f4f6;
+        overscroll-behavior-y: none; /* Prevent pull-to-refresh on mobile */
       }
       .hide-scrollbar::-webkit-scrollbar {
         display: none;
@@ -48,6 +62,10 @@
       .leaflet-container {
         font-family: inherit;
         z-index: 0;
+      }
+      /* Input styles to prevent zoom on focus on iOS */
+      input, select, textarea {
+        font-size: 16px !important; 
       }
     </style>
   <script type="importmap">

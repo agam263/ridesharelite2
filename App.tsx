@@ -92,6 +92,8 @@ export default function App() {
   // Coordinates for Map
   const [fromCoords, setFromCoords] = useState<[number, number] | undefined>(undefined);
   const [toCoords, setToCoords] = useState<[number, number] | undefined>(undefined);
+  // Real-time Driver Location State
+  const [driverCoords, setDriverCoords] = useState<[number, number] | undefined>(undefined);
   
   // App Data
   const [matches, setMatches] = useState<MatchCandidate[]>([]);
@@ -176,6 +178,56 @@ export default function App() {
 
     return () => clearTimeout(timeoutId);
   }, [view, role]);
+
+  // Real-time Driver Location Simulation
+  useEffect(() => {
+    let interval: ReturnType<typeof setInterval>;
+    
+    // Only run simulation if ride is booked and we have necessary coordinates
+    if (isRideBooked && selectedMatch && fromCoords) {
+      // Determine Start and End points for the simulation
+      // If I am a Rider, Driver moves from THEIR origin to MY pickup (fromCoords)
+      // If I am a Driver, I move from MY origin (fromCoords) to PASSENGER's pickup (selectedMatch.origin)
+      
+      let startCoords: [number, number];
+      let endCoords: [number, number];
+
+      if (role === 'RIDER') {
+        const matchOriginCoords = LOCATION_COORDINATES[selectedMatch.origin];
+        // If match origin coords unknown, simulate an offset start
+        startCoords = matchOriginCoords || [fromCoords[0] + 0.02, fromCoords[1] + 0.02];
+        endCoords = fromCoords;
+      } else {
+        // I am the driver moving to the passenger
+        startCoords = fromCoords;
+        const matchOriginCoords = LOCATION_COORDINATES[selectedMatch.origin];
+        endCoords = matchOriginCoords || [fromCoords[0] + 0.02, fromCoords[1] + 0.02];
+      }
+
+      let progress = 0;
+      const duration = 30000; // 30 seconds to arrive for demo purposes
+      const step = 100; // Update every 100ms
+
+      interval = setInterval(() => {
+        progress += step / duration;
+        
+        if (progress >= 1) {
+          setDriverCoords(endCoords);
+          clearInterval(interval);
+          // Optional: Add "Driver Arrived" notification logic here
+        } else {
+          // Linear interpolation
+          const lat = startCoords[0] + (endCoords[0] - startCoords[0]) * progress;
+          const lng = startCoords[1] + (endCoords[1] - startCoords[1]) * progress;
+          setDriverCoords([lat, lng]);
+        }
+      }, step);
+    } else {
+      setDriverCoords(undefined);
+    }
+
+    return () => clearInterval(interval);
+  }, [isRideBooked, selectedMatch, fromCoords, role]);
 
   // Handle Geolocation
   const handleGeolocation = () => {
@@ -334,6 +386,7 @@ export default function App() {
   const handleStartChat = (match: MatchCandidate) => {
     setSelectedMatch(match);
     setIsRideBooked(false); // Reset booking status for new chat
+    setDriverCoords(undefined); // Reset driver location
     setMessages([
       {
         id: 'sys-1',
@@ -1647,6 +1700,7 @@ export default function App() {
           matchScore={selectedMatch?.matchScore} 
           fromCoords={fromCoords}
           toCoords={toCoords}
+          driverCoords={driverCoords}
         />
       </div>
 
